@@ -20,8 +20,8 @@ You must return ONLY this XML:
 
 
 class OrchestratorAgent:
-    async def run(self, state: IncidentState, minute: int) -> None:
-        directive, alert, addressed_to, severity = await self._analyze(state, minute)
+    async def run(self, state: IncidentState, minute: int, *, use_llm: bool = True) -> None:
+        directive, alert, addressed_to, severity = await self._analyze(state, minute, use_llm=use_llm)
         if not directive:
             return
 
@@ -51,8 +51,8 @@ class OrchestratorAgent:
             if state.agent_health.get("overwatch"):
                 state.agent_health["overwatch"].last_thought = f"Orchestrator: {alert}"
 
-    async def _analyze(self, state: IncidentState, minute: int) -> tuple[str, str, str, str]:
-        if not is_llm_available():
+    async def _analyze(self, state: IncidentState, minute: int, *, use_llm: bool = True) -> tuple[str, str, str, str]:
+        if not use_llm or not is_llm_available():
             return self._rule_based_analysis(state)
 
         red_count = sum(1 for p in state.patients.values() if p.triage_category == "RED")

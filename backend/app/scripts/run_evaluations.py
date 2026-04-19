@@ -28,7 +28,7 @@ def run_scenario(scenario_id: str) -> dict:
         session._process_minute(minute)
         approvals = list(session.state.pending_approvals)
         for dispatch_id in approvals:
-            session.logistics.approve_dispatch(session.state, dispatch_id, minute)
+            session.approve_dispatch_sync(dispatch_id)
     return {
         "scenario_id": scenario_id,
         "fieldops_metrics": session.state.metrics.model_dump(mode="json"),
@@ -46,4 +46,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

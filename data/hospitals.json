@@ -2,6 +2,7 @@
   {
     "hospital_id": "H-001",
     "name": "UPMC Presbyterian",
+    "email": "trauma@upmc-presbyterian.edu",
     "location": {
       "lat": 40.4443,
       "lng": -79.9592
@@ -26,6 +27,7 @@
   {
     "hospital_id": "H-002",
     "name": "Allegheny General Hospital",
+    "email": "ed@agh-trauma.edu",
     "location": {
       "lat": 40.4545,
       "lng": -80.0024
@@ -49,6 +51,7 @@
   {
     "hospital_id": "H-003",
     "name": "UPMC Mercy",
+    "email": "charge@upmc-mercy.edu",
     "location": {
       "lat": 40.4367,
       "lng": -79.9827
@@ -72,6 +75,7 @@
   {
     "hospital_id": "H-004",
     "name": "UPMC Children's Hospital",
+    "email": "peds-trauma@chp-pittsburgh.edu",
     "location": {
       "lat": 40.4668,
       "lng": -79.9526
@@ -95,6 +99,7 @@
   {
     "hospital_id": "H-005",
     "name": "Jefferson Hospital",
+    "email": "trauma@jefferson-ed.edu",
     "location": {
       "lat": 40.2916,
       "lng": -79.9355
@@ -117,6 +122,7 @@
   {
     "hospital_id": "H-006",
     "name": "St. Clair Hospital",
+    "email": "command@stclair-ed.edu",
     "location": {
       "lat": 40.3726,
       "lng": -80.0748
@@ -137,4 +143,3 @@
     "base_eta_minutes": 22
   }
 ]
-

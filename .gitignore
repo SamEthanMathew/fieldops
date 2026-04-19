@@ -12,7 +12,8 @@ coverage/
 backend/.env
 frontend/.env.local
 .claude/settings.local.json
+.codex-autoloop/
+backend/output/
 
 # Python packaging artifacts
 backend/fieldops_backend.egg-info/
-

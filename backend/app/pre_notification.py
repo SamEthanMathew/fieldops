@@ -36,6 +36,8 @@ async def generate_pre_notification(
     hospital: HospitalRecord,
     timestamp: str,
     minute: int,
+    *,
+    use_llm: bool = True,
 ) -> PreHospitalNotification:
     notification_id = next_id("PN")
     triage_cat = patient.triage_category or "UNKNOWN"
@@ -52,8 +54,10 @@ async def generate_pre_notification(
     needs_summary = ", ".join(patient.needs) if patient.needs else "general_emergency"
     flags_summary = ", ".join(patient.special_flags) if patient.special_flags else "none"
 
-    if is_llm_available():
-        user_prompt = f"""Mass Casualty Pre-Notification:
+    if use_llm and is_llm_available():
+        response = await call_llm(
+            _SYSTEM_PROMPT,
+            f"""Mass Casualty Pre-Notification:
 
 Hospital: {hospital.name} (Level {hospital.trauma_level} Trauma)
 Ambulance: {ambulance.ambulance_id} ({ambulance.type})
@@ -68,27 +72,28 @@ Patient Assessment:
 - Special flags: {flags_summary}
 - Medical needs: {needs_summary}
 
-Generate the hospital pre-alert:"""
-
-        response = await call_llm(_SYSTEM_PROMPT, user_prompt)
+Generate the hospital pre-alert:""",
+        )
         if response:
             alert_msg = extract_xml_tag(response, "alert")
             prep_str = extract_xml_tag(response, "prep_needed") or needs_summary
             prep_needed = [p.strip() for p in prep_str.split(",") if p.strip()]
             if alert_msg:
-                logger.info("Pre-notification generated for %s → %s", patient.patient_id, hospital.name)
+                logger.info("Pre-notification generated for %s -> %s", patient.patient_id, hospital.name)
                 return PreHospitalNotification(
                     notification_id=notification_id,
                     patient_id=patient.patient_id,
                     ambulance_id=ambulance.ambulance_id,
                     hospital_id=hospital.hospital_id,
                     hospital_name=hospital.name,
+                    recipient_email=hospital.email,
                     alert_message=alert_msg,
                     prep_needed=prep_needed,
                     eta_minutes=dispatch.eta_minutes,
                     minute=minute,
                     timestamp=timestamp,
                     triage_category=str(triage_cat),
+                    lead_time_minutes=float(dispatch.eta_minutes),
                 )
 
     alert_msg = (
@@ -106,10 +111,12 @@ Generate the hospital pre-alert:"""
         ambulance_id=ambulance.ambulance_id,
         hospital_id=hospital.hospital_id,
         hospital_name=hospital.name,
+        recipient_email=hospital.email,
         alert_message=alert_msg,
         prep_needed=patient.needs or ["general_emergency"],
         eta_minutes=dispatch.eta_minutes,
         minute=minute,
         timestamp=timestamp,
         triage_category=str(triage_cat),
+        lead_time_minutes=float(dispatch.eta_minutes),
     )

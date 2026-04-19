@@ -1,27 +1,24 @@
 from __future__ import annotations
 
 import asyncio
-import os
-import smtplib
-import warnings
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import csv
+import io
+from email.message import EmailMessage
 from pathlib import Path
 
-warnings.filterwarnings("ignore", category=FutureWarning, module="llama_index")
-
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from .artifacts import attempt_smtp_send
 from .engine import SimulationManager
-from .models import ApproveDispatchRequest, InjectEventRequest, ScenarioControlRequest
+from .models import ApproveDispatchRequest, IncidentModeRequest, InjectEventRequest, ScenarioControlRequest
 from .scenario_loader import list_scenarios
 
 
-app = FastAPI(title="FieldOps API", version="0.1.0")
+app = FastAPI(title="FieldOps API", version="0.2.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -46,14 +43,10 @@ def scenarios():
 
 @app.post("/api/scenarios/{scenario_id}/start")
 def start_scenario(scenario_id: str):
-    import logging, traceback
     try:
         return manager.start(scenario_id).model_dump(mode="json")
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    except Exception as exc:
-        logging.getLogger(__name__).error("start_scenario error: %s\n%s", exc, traceback.format_exc())
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @app.post("/api/scenarios/{scenario_id}/control")
@@ -74,6 +67,25 @@ def get_incident(incident_id: str):
         return manager.get(incident_id).snapshot()
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.post("/api/incidents/{incident_id}/mode")
+async def set_incident_mode(incident_id: str, request: IncidentModeRequest):
+    try:
+        session = manager.get(incident_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    state = await session.set_mode(request.mode)
+    return state.model_dump(mode="json")
+
+
+@app.get("/api/incidents/{incident_id}/metrics/live")
+def get_live_metrics(incident_id: str):
+    try:
+        session = manager.get(incident_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return session.get_live_metrics().model_dump(mode="json")
 
 
 @app.post("/api/events/inject")
@@ -105,47 +117,17 @@ class EmailNotifyRequest(BaseModel):
 
 @app.post("/api/notify/email")
 async def send_notification_email(request: EmailNotifyRequest):
-    """Send (or draft) a pre-hospital notification email via Gmail SMTP."""
-    gmail_user = os.environ.get("GMAIL_USER")
-    gmail_password = os.environ.get("GMAIL_APP_PASSWORD")
-
-    log_line = (
-        f"EMAIL REQUEST | to={request.recipient_email} | "
-        f"subject={request.subject[:60]} | notif={request.notification_id}"
-    )
-
-    if gmail_user and gmail_password:
-        try:
-            msg = MIMEMultipart("alternative")
-            msg["Subject"] = request.subject
-            msg["From"] = gmail_user
-            msg["To"] = request.recipient_email
-            msg.attach(MIMEText(request.body, "plain"))
-
-            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-                server.login(gmail_user, gmail_password)
-                server.sendmail(gmail_user, request.recipient_email, msg.as_string())
-
-            print(f"EMAIL SENT | {log_line}")
-            return {
-                "mode": "sent",
-                "message": f"Email sent to {request.recipient_email}",
-                "notification_id": request.notification_id,
-            }
-        except Exception as exc:
-            print(f"EMAIL SEND FAILED ({exc}) — returning draft | {log_line}")
-
-    # Fallback: return as draft
-    print(f"EMAIL DRAFT | {log_line}")
+    message = EmailMessage()
+    message["To"] = request.recipient_email
+    message["From"] = "fieldops@example.test"
+    message["Subject"] = request.subject
+    message.set_content(request.body)
+    status, error = attempt_smtp_send(message)
     return {
-        "mode": "draft",
-        "message": "Email composed as draft (set GMAIL_USER + GMAIL_APP_PASSWORD to send)",
+        "mode": "sent" if status == "sent" else "draft",
+        "message": "Email sent" if status == "sent" else "Email saved only",
         "notification_id": request.notification_id,
-        "composed": {
-            "to": request.recipient_email,
-            "subject": request.subject,
-            "body": request.body,
-        },
+        "error": error,
     }
 
 
@@ -156,6 +138,87 @@ def get_metrics(incident_id: str):
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return {"metrics": snapshot["metrics"], "baseline": snapshot["baseline"]}
+
+
+def _find_notification(notification_id: str):
+    for session in manager.sessions.values():
+        notification = session.get_notification(notification_id)
+        if notification is not None:
+            return session, notification
+    raise HTTPException(status_code=404, detail=f"Notification {notification_id} not found")
+
+
+@app.get("/api/pre-notifications/{notification_id}/pdf")
+def get_pre_notification_pdf(notification_id: str):
+    _, notification = _find_notification(notification_id)
+    if not notification.pdf_path:
+        raise HTTPException(status_code=404, detail="PDF not generated")
+    path = Path(notification.pdf_path)
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="PDF missing on disk")
+    return FileResponse(path, media_type="application/pdf", filename=path.name)
+
+
+@app.get("/api/emails/{notification_id}/eml")
+def get_email_eml(notification_id: str):
+    _, notification = _find_notification(notification_id)
+    if not notification.eml_path:
+        raise HTTPException(status_code=404, detail="EML not generated")
+    path = Path(notification.eml_path)
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="EML missing on disk")
+    return FileResponse(path, media_type="message/rfc822", filename=path.name)
+
+
+@app.get("/api/incidents/{incident_id}/report")
+def get_incident_report(incident_id: str):
+    try:
+        session = manager.get(incident_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    artifact = session.ensure_report_artifact()
+    path = Path(artifact.path)
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="Report missing on disk")
+    return FileResponse(path, media_type="application/pdf", filename=path.name)
+
+
+@app.get("/api/incidents/{incident_id}/audit.json")
+def get_incident_audit_json(incident_id: str):
+    try:
+        session = manager.get(incident_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return JSONResponse(content=[entry.model_dump(mode="json") for entry in session.state.audit_log])
+
+
+@app.get("/api/incidents/{incident_id}/audit.csv")
+def get_incident_audit_csv(incident_id: str):
+    try:
+        session = manager.get(incident_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow(["audit_id", "minute", "timestamp", "event_type", "agent", "status", "message", "data"])
+    for entry in session.state.audit_log:
+        writer.writerow(
+            [
+                entry.audit_id,
+                entry.minute,
+                entry.timestamp,
+                entry.event_type,
+                entry.agent,
+                entry.status,
+                entry.message,
+                entry.data,
+            ]
+        )
+    return Response(
+        content=buffer.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{incident_id}-audit.csv"'},
+    )
 
 
 @app.websocket("/ws/incidents/{incident_id}")

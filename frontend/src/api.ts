@@ -1,4 +1,4 @@
-import type { IncidentSnapshot, ScenarioSummary } from "./types";
+import type { IncidentSnapshot, LiveMetrics, ScenarioSummary } from "./types";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
@@ -28,6 +28,13 @@ export function getIncident(incidentId: string) {
   return apiRequest<IncidentSnapshot>(`/api/incidents/${incidentId}`);
 }
 
+export function setIncidentMode(incidentId: string, mode: string) {
+  return apiRequest<IncidentSnapshot>(`/api/incidents/${incidentId}/mode`, {
+    method: "POST",
+    body: JSON.stringify({ mode }),
+  });
+}
+
 export function controlScenario(scenarioId: string, incidentId: string, action: string, speed?: number, steps?: number) {
   return apiRequest<IncidentSnapshot>(`/api/scenarios/${scenarioId}/control`, {
     method: "POST",
@@ -52,6 +59,10 @@ export function injectEvent(incidentId: string, event: Record<string, unknown>) 
 export function getIncidentWebSocketUrl(incidentId: string) {
   const base = API_BASE.replace("http://", "ws://").replace("https://", "wss://");
   return `${base}/ws/incidents/${incidentId}`;
+}
+
+export function getLiveMetrics(incidentId: string) {
+  return apiRequest<LiveMetrics>(`/api/incidents/${incidentId}/metrics/live`);
 }
 
 export function sendNotificationEmail(payload: {

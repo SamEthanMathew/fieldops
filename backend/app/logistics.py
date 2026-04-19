@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 
 from .models import (
@@ -18,6 +19,8 @@ from .models import (
     TriageCategory,
 )
 from .utils import clamp, iso_at_minute, next_id
+
+logger = logging.getLogger(__name__)
 
 
 SEVERITY_PRIORITY = {

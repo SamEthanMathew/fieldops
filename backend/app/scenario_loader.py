@@ -29,6 +29,7 @@ def load_seed_hospitals() -> dict[str, HospitalRecord]:
         record = HospitalRecord(
             hospital_id=item["hospital_id"],
             name=item["name"],
+            email=item.get("email"),
             location=Coordinates(**item["location"]),
             trauma_level=item["trauma_level"],
             specialties=item["specialties"],
@@ -73,4 +74,3 @@ def list_scenarios() -> list[dict[str, str]]:
         {"scenario_id": "bridge-collapse-standard", "name": "Pittsburgh Bridge Collapse"},
         {"scenario_id": "bridge-collapse-heavy", "name": "Bridge Collapse Heavy"},
     ]
-

@@ -6,6 +6,7 @@
     "incident_id",
     "incident_type",
     "incident_phase",
+    "mode",
     "location",
     "start_time",
     "current_time",
@@ -19,7 +20,12 @@
     "decision_log",
     "pending_approvals",
     "agent_health",
-    "baseline"
+    "baseline",
+    "live_metrics",
+    "audit_log",
+    "guardrails",
+    "email_log",
+    "degraded_mode"
   ],
   "properties": {
     "incident_id": {
@@ -29,6 +35,9 @@
       "type": "string"
     },
     "incident_phase": {
+      "type": "string"
+    },
+    "mode": {
       "type": "string"
     },
     "location": {
@@ -102,9 +111,32 @@
     "agent_health": {
       "type": "object"
     },
+    "email_log": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "audit_log": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "guardrails": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "live_metrics": {
+      "type": "object"
+    },
+    "degraded_mode": {
+      "type": "boolean"
+    },
     "baseline": {
       "type": "object"
     }
   }
 }
-

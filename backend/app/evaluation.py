@@ -23,10 +23,12 @@ def update_metrics(state: IncidentState) -> None:
     specialty_total = 0
     specialty_correct = 0
 
+    executed_by_patient = {d.patient_id: d for d in state.dispatches if d.status == "EXECUTED"}
+
     for patient in patients:
         if patient.triage_category:
             by_category[patient.triage_category] += 1
-        matching_dispatch = next((dispatch for dispatch in state.dispatches if dispatch.patient_id == patient.patient_id and dispatch.status == "EXECUTED"), None)
+        matching_dispatch = executed_by_patient.get(patient.patient_id)
         if matching_dispatch and patient.triage_category:
             dispatch_latencies.append((matching_dispatch.created_minute - patient.reported_minute) * 60)
         if patient.needs and patient.assigned_hospital:
@@ -79,6 +81,9 @@ def update_metrics(state: IncidentState) -> None:
 def simulate_baseline(state: IncidentState, scenario: ScenarioDefinition, triage_agent: TriageAgent) -> BaselineState:
     working_state = deepcopy(state)
     timeline: dict[str, MetricSnapshot] = {}
+    events_by_minute: dict[int, list] = {}
+    for evt in scenario.events:
+        events_by_minute.setdefault(evt.minute, []).append(evt)
 
     for minute in range(scenario.duration_minutes + 1):
         for ambulance in working_state.ambulances.values():
@@ -89,7 +94,7 @@ def simulate_baseline(state: IncidentState, scenario: ScenarioDefinition, triage
                 ambulance.current_patient = None
                 ambulance.eta_available = None
 
-        for event in [item for item in scenario.events if item.minute == minute]:
+        for event in events_by_minute.get(minute, []):
             if event.type == "PATIENT_REPORTED":
                 assessment = triage_agent.assess(
                     patient_id=event.patient_id or "UNKNOWN",
@@ -151,7 +156,7 @@ def simulate_baseline(state: IncidentState, scenario: ScenarioDefinition, triage
         for patient in candidates:
             if not available:
                 break
-            ambulance = available.pop(0 if patient.triage_category != TriageCategory.RED else 0)
+            ambulance = available.pop(0)
             nearest_hospital = min(working_state.hospitals.values(), key=lambda hospital: hospital.eta_from_scene_minutes)
             patient.status = PatientStatus.DISPATCHED
             patient.assigned_ambulance = ambulance.ambulance_id

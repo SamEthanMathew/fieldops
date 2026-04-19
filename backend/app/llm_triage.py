@@ -3,8 +3,8 @@ from __future__ import annotations
 import logging
 from typing import Iterable
 
-from .llm_client import call_llm, extract_xml_tag, is_llm_available
-from .models import ProtocolCitation, TriageAssessment, TriageCategory, Vitals
+from .llm_client import call_llm_sync, extract_xml_tag, is_llm_available
+from .models import ProtocolCitation, TriageAssessment, TriageCategory
 from .triage import TriageAgent
 
 logger = logging.getLogger(__name__)
@@ -13,7 +13,7 @@ _SYSTEM_PROMPT = """You are a field triage medic AI. You classify mass casualty 
 
 TRIAGE CATEGORIES:
 - BLACK: Not breathing after airway repositioning, or pulseless with no respirations
-- RED (Immediate): Resp rate >30 or <10, GCS ≤12, radial pulse absent/weak, airway burn risk, confusion
+- RED (Immediate): Resp rate >30 or <10, GCS <=12, radial pulse absent/weak, airway burn risk, confusion
 - YELLOW (Delayed): Ambulatory with significant injuries, stable vitals but needs intervention
 - GREEN (Minor): Walking wounded, minor injuries, normal vitals
 
@@ -28,15 +28,12 @@ You must return ONLY valid XML in this exact format:
 <review_required>false</review_required>
 <pediatric>false</pediatric>"""
 
-_NEEDS_MAP = {
-    "neurosurgery": "neurosurgery",
-    "trauma": "trauma_center",
-    "burn": "burn_center",
-    "orthopedic": "orthopedic_surgery",
-    "pediatric": "pediatric_trauma",
-    "general": "general_emergency",
-    "icu": "icu",
-}
+_ADJUDICATION_PROMPT = """You are reviewing two triage opinions for a mass casualty patient.
+Choose the single safest final triage category.
+
+Return ONLY:
+<triage_category>RED</triage_category>
+<reasoning>One sentence explaining the choice</reasoning>"""
 
 
 class LLMTriageAgent:
@@ -52,29 +49,38 @@ class LLMTriageAgent:
         report: str,
         timestamp: str,
         special_notes: Iterable[str] | None = None,
+        memory_context: str | None = None,
+        rule_based_assessment: TriageAssessment | None = None,
+        accuracy_review: bool = False,
     ) -> TriageAssessment:
-        import asyncio
-        import concurrent.futures
         special_notes = list(special_notes or [])
+        fallback_assessment = rule_based_assessment or self._fallback.assess(patient_id, report, timestamp, special_notes)
         if not is_llm_available():
-            return self._fallback.assess(patient_id, report, timestamp, special_notes)
+            return fallback_assessment
+        try:
+            return self._assess_sync(
+                patient_id=patient_id,
+                report=report,
+                timestamp=timestamp,
+                special_notes=special_notes,
+                memory_context=memory_context,
+                fallback_assessment=fallback_assessment,
+                accuracy_review=accuracy_review,
+            )
+        except Exception as exc:
+            logger.warning("LLM triage failed, using fallback: %s", exc)
+            return fallback_assessment
 
-        def _run() -> TriageAssessment:
-            return asyncio.run(self._assess_async(patient_id, report, timestamp, special_notes))
-
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
-            try:
-                return pool.submit(_run).result(timeout=20)
-            except Exception as exc:
-                logger.warning("LLM triage failed, using fallback: %s", exc)
-                return self._fallback.assess(patient_id, report, timestamp, special_notes)
-
-    async def _assess_async(
+    def _assess_sync(
         self,
+        *,
         patient_id: str,
         report: str,
         timestamp: str,
         special_notes: list[str],
+        memory_context: str | None,
+        fallback_assessment: TriageAssessment,
+        accuracy_review: bool,
     ) -> TriageAssessment:
         is_pediatric_hint = any(n in report.lower() for n in ["boy", "girl", "child", "pediatric"]) or any(
             n == "pediatric" for n in special_notes
@@ -82,12 +88,18 @@ class LLMTriageAgent:
         protocol_query = f"triage {'pediatric' if is_pediatric_hint else 'adult'} patient {report[:100]}"
         protocol_context = self._rag.query_text(protocol_query)
 
-        system = _SYSTEM_PROMPT.format(protocol_context=protocol_context[:800])
-        user = f"Patient ID: {patient_id}\nField Report: {report}\nSpecial Notes: {', '.join(special_notes) or 'none'}\n\nClassify this patient:"
-
-        response = await call_llm(system, user)
+        response = call_llm_sync(
+            _SYSTEM_PROMPT.format(protocol_context=protocol_context[:800]),
+            (
+                f"Patient ID: {patient_id}\n"
+                f"Field Report: {report}\n"
+                f"Special Notes: {', '.join(special_notes) or 'none'}\n"
+                f"Prior similar cases: {memory_context or 'none'}\n\n"
+                "Classify this patient:"
+            ),
+        )
         if not response:
-            return self._fallback.assess(patient_id, report, timestamp, special_notes)
+            return fallback_assessment
 
         category_str = extract_xml_tag(response, "triage_category") or "GREEN"
         try:
@@ -113,27 +125,67 @@ class LLMTriageAgent:
         pediatric_str = extract_xml_tag(response, "pediatric") or "false"
         pediatric = pediatric_str.lower() == "true" or is_pediatric_hint
 
-        citation_source = "llamaindex_gemini_rag"
-        citation = ProtocolCitation(source=citation_source, excerpt=protocol_context[:200])
+        if accuracy_review and fallback_assessment.triage_category != category:
+            adjudicated = self._adjudicate_disagreement(
+                report=report,
+                protocol_context=protocol_context,
+                llm_category=category,
+                llm_reasoning=reasoning,
+                rule_category=fallback_assessment.triage_category,
+                rule_reasoning=fallback_assessment.reasoning,
+                memory_context=memory_context,
+            )
+            if adjudicated is not None:
+                category, adjudication_reason = adjudicated
+                reasoning = f"{reasoning} {adjudication_reason}".strip()
 
-        fallback = self._fallback.assess(patient_id, report, timestamp, special_notes)
-        vitals = fallback.vitals
-        injuries = fallback.injuries
-        special_flags = fallback.special_flags
+        if memory_context:
+            reasoning = f"{reasoning} {memory_context}".strip()
 
-        logger.info("LLM triage %s → %s (conf=%.2f)", patient_id, category, confidence)
+        citation = ProtocolCitation(source="llamaindex_gemini_rag", excerpt=protocol_context[:200])
+        logger.info("LLM triage %s -> %s (conf=%.2f)", patient_id, category, confidence)
         return TriageAssessment(
             patient_id=patient_id,
             triage_category=category,
             confidence=confidence,
-            vitals=vitals,
-            injuries=injuries,
-            special_flags=special_flags,
+            vitals=fallback_assessment.vitals,
+            injuries=fallback_assessment.injuries,
+            special_flags=fallback_assessment.special_flags,
             needs=needs,
             pediatric=pediatric,
             timestamp=timestamp,
             reasoning=reasoning,
             citation=citation,
             review_required=review_required,
-            data_quality_flags=fallback.data_quality_flags,
+            data_quality_flags=fallback_assessment.data_quality_flags,
         )
+
+    def _adjudicate_disagreement(
+        self,
+        *,
+        report: str,
+        protocol_context: str,
+        llm_category: TriageCategory,
+        llm_reasoning: str,
+        rule_category: TriageCategory,
+        rule_reasoning: str,
+        memory_context: str | None,
+    ) -> tuple[TriageCategory, str] | None:
+        response = call_llm_sync(
+            _ADJUDICATION_PROMPT,
+            (
+                f"Field report: {report}\n"
+                f"Protocol context: {protocol_context[:500]}\n"
+                f"LLM opinion: {llm_category} because {llm_reasoning}\n"
+                f"Rule-based opinion: {rule_category} because {rule_reasoning}\n"
+                f"Memory context: {memory_context or 'none'}"
+            ),
+        )
+        if not response:
+            return None
+        category_text = extract_xml_tag(response, "triage_category") or ""
+        reasoning = extract_xml_tag(response, "reasoning") or ""
+        try:
+            return TriageCategory(category_text.upper()), reasoning
+        except ValueError:
+            return None

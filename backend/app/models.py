@@ -56,6 +56,12 @@ class IncidentPhase(str, Enum):
     RECOVERY = "RECOVERY"
 
 
+class IncidentMode(str, Enum):
+    SPEED = "speed"
+    BALANCED = "balanced"
+    ACCURACY = "accuracy"
+
+
 class AgentState(str, Enum):
     NOMINAL = "NOMINAL"
     DEGRADED = "DEGRADED"
@@ -122,6 +128,10 @@ class PatientRecord(FieldOpsModel):
     assigned_hospital: str | None = None
     ground_truth_triage: str | None = None
     special_notes: list[str] = Field(default_factory=list)
+    shadow_triage_category: TriageCategory | None = None
+    shadow_confidence: float | None = None
+    shadow_reasoning: str | None = None
+    memory_summary: str | None = None
     history: list[HistoryEntry] = Field(default_factory=list)
 
 
@@ -135,6 +145,7 @@ class Capacity(FieldOpsModel):
 class HospitalRecord(FieldOpsModel):
     hospital_id: str
     name: str
+    email: str | None = None
     location: Coordinates
     trauma_level: int
     specialties: list[str]
@@ -212,6 +223,69 @@ class MetricSnapshot(FieldOpsModel):
     survival_proxy_score: float = 0.0
 
 
+class ArtifactRef(FieldOpsModel):
+    label: str
+    kind: str
+    path: str
+    download_url: str | None = None
+
+
+class LatencyStats(FieldOpsModel):
+    last_ms: float = 0.0
+    avg_ms: float = 0.0
+    p95_ms: float = 0.0
+    call_count: int = 0
+    success_count: int = 0
+    fallback_count: int = 0
+
+
+class CostEstimate(FieldOpsModel):
+    total_usd: float = 0.0
+    by_agent: dict[str, float] = Field(default_factory=dict)
+
+
+class AgreementRates(FieldOpsModel):
+    active_vs_ground_truth: float = 0.0
+    shadow_vs_ground_truth: float = 0.0
+    active_vs_shadow: float = 0.0
+    three_way_agreement: float = 0.0
+
+
+class LeadTimeStats(FieldOpsModel):
+    last_minutes: float = 0.0
+    avg_minutes: float = 0.0
+    p95_minutes: float = 0.0
+
+
+class CircuitBreakerStatus(FieldOpsModel):
+    available: bool = False
+    circuit_open: bool = False
+    fail_count: int = 0
+    retry_after_seconds: float = 0.0
+    model: str | None = None
+
+
+class TradeoffSummary(FieldOpsModel):
+    compare_mode: IncidentMode = IncidentMode.SPEED
+    accuracy_delta: float = 0.0
+    latency_delta_ms: float = 0.0
+    summary: str = ""
+
+
+class LiveMetrics(FieldOpsModel):
+    current_mode: IncidentMode = IncidentMode.BALANCED
+    active_accuracy: float = 0.0
+    shadow_accuracy: float = 0.0
+    agreement: AgreementRates = Field(default_factory=AgreementRates)
+    per_agent_latency: dict[str, LatencyStats] = Field(default_factory=dict)
+    pre_notification_lead_time: LeadTimeStats = Field(default_factory=LeadTimeStats)
+    cost_estimate: CostEstimate = Field(default_factory=CostEstimate)
+    tradeoffs: TradeoffSummary = Field(default_factory=TradeoffSummary)
+    circuit_breaker: CircuitBreakerStatus = Field(default_factory=CircuitBreakerStatus)
+    emails_sent: int = 0
+    emails_total: int = 0
+
+
 class DecisionLogEntry(FieldOpsModel):
     minute: int
     timestamp: str
@@ -221,12 +295,33 @@ class DecisionLogEntry(FieldOpsModel):
     related_ids: list[str] = Field(default_factory=list)
 
 
+class AuditLogEntry(FieldOpsModel):
+    audit_id: str
+    minute: int
+    timestamp: str
+    event_type: str
+    agent: str
+    message: str
+    status: str = "INFO"
+    data: dict[str, Any] = Field(default_factory=dict)
+
+
+class GuardrailRule(FieldOpsModel):
+    rule_id: str
+    title: str
+    description: str
+    active: bool = True
+
+
 class AgentHealth(FieldOpsModel):
     status: AgentState = AgentState.NOMINAL
     last_updated_minute: int = 0
     last_error: str | None = None
     llm_mode: bool = False
     last_thought: str | None = None
+    latency: LatencyStats = Field(default_factory=LatencyStats)
+    estimated_tokens: int = 0
+    estimated_cost_usd: float = 0.0
 
 
 class AgentMessage(FieldOpsModel):
@@ -245,12 +340,32 @@ class PreHospitalNotification(FieldOpsModel):
     ambulance_id: str
     hospital_id: str
     hospital_name: str
+    recipient_email: str | None = None
     alert_message: str
     prep_needed: list[str] = Field(default_factory=list)
     eta_minutes: int
     minute: int
     timestamp: str
     triage_category: str
+    lead_time_minutes: float = 0.0
+    email_status: str = "pending"
+    pdf_path: str | None = None
+    eml_path: str | None = None
+    pdf_artifact: ArtifactRef | None = None
+    eml_artifact: ArtifactRef | None = None
+
+
+class EmailDeliveryRecord(FieldOpsModel):
+    notification_id: str
+    hospital_id: str
+    hospital_name: str
+    recipient_email: str
+    subject: str
+    status: str
+    minute: int
+    timestamp: str
+    eml_path: str | None = None
+    error: str | None = None
 
 
 class BaselineState(FieldOpsModel):
@@ -265,6 +380,7 @@ class IncidentState(FieldOpsModel):
     scenario_id: str
     incident_type: str
     incident_phase: IncidentPhase
+    mode: IncidentMode = IncidentMode.BALANCED
     location: Coordinates
     start_time: str
     current_time: str
@@ -280,6 +396,14 @@ class IncidentState(FieldOpsModel):
     agent_health: dict[str, AgentHealth] = Field(default_factory=dict)
     agent_messages: list[AgentMessage] = Field(default_factory=list)
     pre_notifications: list[PreHospitalNotification] = Field(default_factory=list)
+    email_log: list[EmailDeliveryRecord] = Field(default_factory=list)
+    audit_log: list[AuditLogEntry] = Field(default_factory=list)
+    guardrails: list[GuardrailRule] = Field(default_factory=list)
+    artifacts: list[ArtifactRef] = Field(default_factory=list)
+    report_artifact: ArtifactRef | None = None
+    live_metrics: LiveMetrics = Field(default_factory=LiveMetrics)
+    degraded_mode: bool = False
+    degraded_reason: str | None = None
     baseline: BaselineState
     meta: dict[str, Any] = Field(default_factory=dict)
 
@@ -321,3 +445,7 @@ class InjectEventRequest(FieldOpsModel):
 
 class ApproveDispatchRequest(FieldOpsModel):
     incident_id: str
+
+
+class IncidentModeRequest(FieldOpsModel):
+    mode: IncidentMode
