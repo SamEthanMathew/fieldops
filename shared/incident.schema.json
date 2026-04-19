@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "IncidentState",
+  "type": "object",
+  "required": [
+    "incident_id",
+    "incident_type",
+    "incident_phase",
+    "location",
+    "start_time",
+    "current_time",
+    "current_minute",
+    "patients",
+    "hospitals",
+    "ambulances",
+    "dispatches",
+    "sitreps",
+    "metrics",
+    "decision_log",
+    "pending_approvals",
+    "agent_health",
+    "baseline"
+  ],
+  "properties": {
+    "incident_id": {
+      "type": "string"
+    },
+    "incident_type": {
+      "type": "string"
+    },
+    "incident_phase": {
+      "type": "string"
+    },
+    "location": {
+      "type": "object",
+      "required": [
+        "lat",
+        "lng",
+        "description"
+      ],
+      "properties": {
+        "lat": {
+          "type": "number"
+        },
+        "lng": {
+          "type": "number"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "current_minute": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "patients": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object"
+      }
+    },
+    "hospitals": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object"
+      }
+    },
+    "ambulances": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object"
+      }
+    },
+    "dispatches": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "sitreps": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "metrics": {
+      "type": "object"
+    },
+    "decision_log": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "pending_approvals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "agent_health": {
+      "type": "object"
+    },
+    "baseline": {
+      "type": "object"
+    }
+  }
+}
+

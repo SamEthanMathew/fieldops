@@ -1,0 +1,18 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+node_modules/
+dist/
+coverage/
+.DS_Store
+*.log
+
+# Secrets and local overrides
+backend/.env
+frontend/.env.local
+.claude/settings.local.json
+
+# Python packaging artifacts
+backend/fieldops_backend.egg-info/
+

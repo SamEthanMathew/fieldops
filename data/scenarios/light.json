@@ -1,0 +1,29 @@
+{
+  "scenario_id": "bridge-collapse-light",
+  "name": "Bridge Collapse Light",
+  "incident_type": "STRUCTURAL_COLLAPSE",
+  "duration_minutes": 20,
+  "scene": {
+    "lat": 40.435,
+    "lng": -79.99,
+    "description": "Birmingham Bridge, Pittsburgh PA"
+  },
+  "events": [
+    {"minute": 0, "type": "PATIENT_REPORTED", "patient_id": "L-001", "report": "Male, approximately 22, walking wounded, resp rate 18, radial pulse strong, GCS 15.", "ground_truth_triage": "GREEN", "special_notes": []},
+    {"minute": 0, "type": "PATIENT_REPORTED", "patient_id": "L-002", "report": "Female, approximately 45, pelvic crush injury, resp rate 32, radial pulse weak, GCS 12.", "ground_truth_triage": "RED", "special_notes": ["crush_injury"]},
+    {"minute": 2, "type": "PATIENT_REPORTED", "patient_id": "L-003", "report": "Male, approximately 37, chest pain and shortness of breath, resp rate 28, radial pulse present, GCS 14.", "ground_truth_triage": "YELLOW", "special_notes": ["trauma"]},
+    {"minute": 4, "type": "PATIENT_REPORTED", "patient_id": "L-004", "report": "Girl, age 7, crying with arm deformity, resp rate 24, radial pulse present, GCS 15.", "ground_truth_triage": "YELLOW", "special_notes": ["pediatric", "orthopedic"]},
+    {"minute": 6, "type": "PATIENT_REPORTED", "patient_id": "L-005", "report": "Male, approximately 53, facial burns and hoarseness, resp rate 31, radial pulse present, GCS 14.", "ground_truth_triage": "RED", "special_notes": ["burn"]},
+    {"minute": 8, "type": "PATIENT_REPORTED", "patient_id": "L-006", "report": "Female, approximately 31, walking with abrasions, resp rate 18, radial pulse strong, GCS 15.", "ground_truth_triage": "GREEN", "special_notes": []},
+    {"minute": 10, "type": "PATIENT_REPORTED", "patient_id": "L-007", "report": "Male, approximately 61, head injury with confusion, resp rate 24, radial pulse present, GCS 11.", "ground_truth_triage": "RED", "special_notes": ["neuro"]},
+    {"minute": 12, "type": "PATIENT_REPORTED", "patient_id": "L-008", "report": "Female, approximately 48, ankle pain, walking, resp rate 16, radial pulse strong, GCS 15.", "ground_truth_triage": "GREEN", "special_notes": []},
+    {"minute": 14, "type": "PATIENT_REPORTED", "patient_id": "L-009", "report": "Male, approximately 29, open forearm fracture, resp rate 22, radial pulse present, GCS 15.", "ground_truth_triage": "YELLOW", "special_notes": ["orthopedic"]},
+    {"minute": 16, "type": "PATIENT_REPORTED", "patient_id": "L-010", "report": "Female, approximately 58, not breathing and pulseless, GCS 3.", "ground_truth_triage": "BLACK", "special_notes": []},
+    {"minute": 18, "type": "PATIENT_REPORTED", "patient_id": "L-011", "report": "Male, approximately 40, abdominal bruising, resp rate 22, radial pulse present, GCS 15.", "ground_truth_triage": "YELLOW", "special_notes": ["trauma"]},
+    {"minute": 18, "type": "PATIENT_REPORTED", "patient_id": "L-012", "report": "Female, approximately 35, walking and alert, mild lacerations, resp rate 18, radial pulse strong, GCS 15.", "ground_truth_triage": "GREEN", "special_notes": []},
+    {"minute": 18, "type": "PATIENT_REPORTED", "patient_id": "L-013", "report": "Male, approximately 47, severe leg deformity, resp rate 29, radial pulse weak, GCS 13.", "ground_truth_triage": "RED", "special_notes": ["orthopedic"]},
+    {"minute": 19, "type": "PATIENT_REPORTED", "patient_id": "L-014", "report": "Boy, age 5, abdominal pain, resp rate 24, radial pulse present, GCS 15.", "ground_truth_triage": "YELLOW", "special_notes": ["pediatric"]},
+    {"minute": 19, "type": "PATIENT_REPORTED", "patient_id": "L-015", "report": "Female, approximately 26, minor sprain, walking, resp rate 18, radial pulse strong, GCS 15.", "ground_truth_triage": "GREEN", "special_notes": []}
+  ]
+}
+

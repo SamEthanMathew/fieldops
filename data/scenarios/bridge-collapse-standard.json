@@ -1,0 +1,55 @@
+{
+  "scenario_id": "bridge-collapse-standard",
+  "name": "Pittsburgh Bridge Collapse",
+  "incident_type": "STRUCTURAL_COLLAPSE",
+  "duration_minutes": 45,
+  "scene": {
+    "lat": 40.435,
+    "lng": -79.99,
+    "description": "Birmingham Bridge, Pittsburgh PA"
+  },
+  "events": [
+    {"minute": 0, "type": "PATIENT_REPORTED", "patient_id": "P-001", "report": "Female, approximately 35, trapped under concrete slab with chest pain and difficulty breathing. Resp rate 24, radial pulse strong, GCS 14.", "ground_truth_triage": "YELLOW", "special_notes": []},
+    {"minute": 0, "type": "PATIENT_REPORTED", "patient_id": "P-002", "report": "Male, approximately 42, found pulseless and not breathing after extraction. No purposeful movement. GCS 3.", "ground_truth_triage": "BLACK", "special_notes": []},
+    {"minute": 0, "type": "PATIENT_REPORTED", "patient_id": "P-003", "report": "Male, approximately 28, walking wounded with forehead laceration and ankle pain. Resp rate 18, radial pulse strong, GCS 15.", "ground_truth_triage": "GREEN", "special_notes": []},
+    {"minute": 0, "type": "PATIENT_REPORTED", "patient_id": "P-004", "report": "Female, approximately 51, severe leg deformity, weak radial pulse, resp rate 32, GCS 13.", "ground_truth_triage": "RED", "special_notes": ["orthopedic"]},
+    {"minute": 0, "type": "PATIENT_REPORTED", "patient_id": "P-005", "report": "Male, approximately 60, trapped with crush injury to pelvis, resp rate 28, radial pulse weak, GCS 12.", "ground_truth_triage": "RED", "special_notes": ["crush_injury"]},
+
+    {"minute": 2, "type": "PATIENT_REPORTED", "patient_id": "P-006", "report": "Female, approximately 44, open humerus fracture, resp rate 22, radial pulse present, GCS 15.", "ground_truth_triage": "YELLOW", "special_notes": ["orthopedic"]},
+    {"minute": 2, "type": "PATIENT_REPORTED", "patient_id": "P-007", "report": "Male, approximately 40, found under rubble, compound fracture left femur, GCS 12, resp rate 28, radial pulse weak.", "ground_truth_triage": "RED", "special_notes": ["crush_injury", "orthopedic"]},
+    {"minute": 2, "type": "PATIENT_REPORTED", "patient_id": "P-008", "report": "Female, approximately 19, ambulatory with abrasions and crying. Resp rate 20, radial pulse strong, GCS 15.", "ground_truth_triage": "GREEN", "special_notes": []},
+    {"minute": 2, "type": "PATIENT_REPORTED", "patient_id": "P-009", "report": "Male, approximately 33, shortness of breath and chest trauma, resp rate 34, radial pulse present, GCS 14.", "ground_truth_triage": "RED", "special_notes": ["trauma"]},
+    {"minute": 2, "type": "PATIENT_REPORTED", "patient_id": "P-010", "report": "Female, approximately 70, confused, scalp laceration, resp rate 26, radial pulse strong, GCS 11.", "ground_truth_triage": "RED", "special_notes": ["neuro"]},
+    {"minute": 2, "type": "PATIENT_REPORTED", "patient_id": "P-011", "report": "Male, approximately 49, abdominal pain with bruising, resp rate 24, radial pulse present, GCS 15.", "ground_truth_triage": "YELLOW", "special_notes": ["trauma"]},
+    {"minute": 2, "type": "PATIENT_REPORTED", "patient_id": "P-012", "report": "Female, approximately 25, walking and carrying another victim, mild wrist pain, resp rate 16, radial pulse strong, GCS 15.", "ground_truth_triage": "GREEN", "special_notes": []},
+    {"minute": 2, "type": "PATIENT_REPORTED", "patient_id": "P-013", "report": "Male, approximately 58, facial burns and hoarse voice, resp rate 30, radial pulse present, GCS 14.", "ground_truth_triage": "RED", "special_notes": ["burn"]},
+
+    {"minute": 5, "type": "PATIENT_REPORTED", "patient_id": "P-014", "report": "Female, approximately 31, walking wounded with knee pain, resp rate 18, radial pulse strong, GCS 15.", "ground_truth_triage": "GREEN", "special_notes": []},
+    {"minute": 5, "type": "PATIENT_REPORTED", "patient_id": "P-015", "report": "Male, approximately 24, superficial cuts and anxiety, walking. Resp rate 18, radial pulse strong, GCS 15.", "ground_truth_triage": "GREEN", "special_notes": []},
+    {"minute": 5, "type": "PATIENT_REPORTED", "patient_id": "P-016", "report": "Female, approximately 46, shoulder pain, walking, resp rate 18, radial pulse strong, GCS 15.", "ground_truth_triage": "GREEN", "special_notes": []},
+    {"minute": 5, "type": "PATIENT_REPORTED", "patient_id": "P-017", "report": "Male, approximately 54, laceration to forearm, walking, resp rate 19, radial pulse strong, GCS 15.", "ground_truth_triage": "GREEN", "special_notes": []},
+    {"minute": 5, "type": "PATIENT_REPORTED", "patient_id": "P-018", "report": "Female, approximately 38, minor limp and abrasions, walking, resp rate 17, radial pulse strong, GCS 15.", "ground_truth_triage": "GREEN", "special_notes": []},
+    {"minute": 5, "type": "PATIENT_REPORTED", "patient_id": "P-019", "report": "Male, approximately 47, dizziness but walking, resp rate 20, radial pulse strong, GCS 15.", "ground_truth_triage": "GREEN", "special_notes": []},
+
+    {"minute": 8, "type": "PATIENT_REPORTED", "patient_id": "P-020", "report": "Female, approximately 36, new collapse victim, decreased breath sounds, resp rate 36, radial pulse weak, GCS 12.", "ground_truth_triage": "RED", "special_notes": ["trauma"]},
+    {"minute": 8, "type": "PATIENT_REPORTED", "patient_id": "P-021", "report": "Male, approximately 61, crush chest injury, resp rate 34, radial pulse weak, GCS 11.", "ground_truth_triage": "RED", "special_notes": ["trauma"]},
+    {"minute": 8, "type": "PATIENT_REPORTED", "patient_id": "P-022", "report": "Female, approximately 29, entrapped with bilateral leg fractures, resp rate 29, radial pulse weak, GCS 13.", "ground_truth_triage": "RED", "special_notes": ["orthopedic"]},
+    {"minute": 8, "type": "PATIENT_REPORTED", "patient_id": "P-023", "report": "Male, approximately 52, burn injury to arm and face, soot around mouth, resp rate 31, radial pulse present, GCS 14.", "ground_truth_triage": "RED", "special_notes": ["burn"]},
+    {"minute": 8, "type": "PATIENT_UPDATED", "patient_id": "P-001", "report": "Patient P-001 worsening, now more short of breath. Resp rate 32, radial pulse weak, GCS 13.", "ground_truth_triage": "RED"},
+    {"minute": 8, "type": "PATIENT_UPDATED", "patient_id": "P-011", "report": "Patient P-011 now hypotensive and confused. Resp rate 30, radial pulse weak, GCS 12.", "ground_truth_triage": "RED"},
+
+    {"minute": 10, "type": "HOSPITAL_STATUS_CHANGED", "hospital_id": "H-002", "status": "DIVERT", "divert_status": true, "reason": "Overwhelmed by concurrent trauma influx"},
+
+    {"minute": 15, "type": "PATIENT_REPORTED", "patient_id": "P-024", "report": "Female, approximately 66, pelvic pain and tenderness, resp rate 24, radial pulse present, GCS 14.", "ground_truth_triage": "YELLOW", "special_notes": ["trauma"]},
+    {"minute": 15, "type": "PATIENT_REPORTED", "patient_id": "P-025", "report": "Male, approximately 23, open tib-fib fracture, resp rate 23, radial pulse present, GCS 15.", "ground_truth_triage": "YELLOW", "special_notes": ["orthopedic"]},
+    {"minute": 15, "type": "PATIENT_REPORTED", "patient_id": "P-026", "report": "Female, approximately 57, head strike with vomiting, resp rate 22, radial pulse present, GCS 13.", "ground_truth_triage": "YELLOW", "special_notes": ["neuro"]},
+
+    {"minute": 20, "type": "PATIENT_REPORTED", "patient_id": "P-027", "report": "Boy, age 6, trapped with abdominal tenderness, resp rate 26, radial pulse present, GCS 15.", "ground_truth_triage": "YELLOW", "special_notes": ["pediatric"]},
+    {"minute": 20, "type": "PATIENT_REPORTED", "patient_id": "P-028", "report": "Girl, age 9, severe leg pain, resp rate 22, radial pulse present, GCS 15.", "ground_truth_triage": "YELLOW", "special_notes": ["pediatric", "orthopedic"]},
+
+    {"minute": 25, "type": "AMBULANCE_STATUS_CHANGED", "ambulance_id": "A-004", "status": "OUT_OF_SERVICE", "reason": "Mechanical failure"},
+
+    {"minute": 30, "type": "PATIENT_REPORTED", "patient_id": "P-029", "report": "Male, approximately 41, trapped with back pain and numb legs, resp rate 24, radial pulse present, GCS 15.", "ground_truth_triage": "YELLOW", "special_notes": ["neuro"]},
+    {"minute": 30, "type": "PATIENT_REPORTED", "patient_id": "P-030", "report": "Female, approximately 34, no respirations after airway reposition attempt, pulseless, GCS 3.", "ground_truth_triage": "BLACK", "special_notes": []}
+  ]
+}

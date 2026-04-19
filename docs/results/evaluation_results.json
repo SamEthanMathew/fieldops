@@ -1,0 +1,107 @@
+[
+  {
+    "scenario_id": "bridge-collapse-light",
+    "fieldops_metrics": {
+      "total_patients": 15,
+      "by_category": {
+        "RED": 4,
+        "YELLOW": 5,
+        "GREEN": 5,
+        "BLACK": 1
+      },
+      "transported": 4,
+      "awaiting_dispatch": 1,
+      "mean_dispatch_latency_sec": 0.0,
+      "hospital_load_gini": 0.333,
+      "triage_accuracy": 1.0,
+      "transport_match_score": 0.929,
+      "survival_proxy_score": 0.912
+    },
+    "baseline_metrics": {
+      "total_patients": 15,
+      "by_category": {
+        "RED": 4,
+        "YELLOW": 5,
+        "GREEN": 5,
+        "BLACK": 1
+      },
+      "transported": 0,
+      "awaiting_dispatch": 1,
+      "mean_dispatch_latency_sec": 0.0,
+      "hospital_load_gini": 0.833,
+      "triage_accuracy": 1.0,
+      "transport_match_score": 0.643,
+      "survival_proxy_score": 0.726
+    }
+  },
+  {
+    "scenario_id": "bridge-collapse-standard",
+    "fieldops_metrics": {
+      "total_patients": 30,
+      "by_category": {
+        "RED": 12,
+        "YELLOW": 7,
+        "GREEN": 9,
+        "BLACK": 2
+      },
+      "transported": 24,
+      "awaiting_dispatch": 3,
+      "mean_dispatch_latency_sec": 0.0,
+      "hospital_load_gini": 0.179,
+      "triage_accuracy": 1.0,
+      "transport_match_score": 0.964,
+      "survival_proxy_score": 0.954
+    },
+    "baseline_metrics": {
+      "total_patients": 30,
+      "by_category": {
+        "RED": 12,
+        "YELLOW": 7,
+        "GREEN": 9,
+        "BLACK": 2
+      },
+      "transported": 15,
+      "awaiting_dispatch": 2,
+      "mean_dispatch_latency_sec": 0.0,
+      "hospital_load_gini": 0.833,
+      "triage_accuracy": 0.933,
+      "transport_match_score": 0.679,
+      "survival_proxy_score": 0.717
+    }
+  },
+  {
+    "scenario_id": "bridge-collapse-heavy",
+    "fieldops_metrics": {
+      "total_patients": 45,
+      "by_category": {
+        "RED": 18,
+        "YELLOW": 14,
+        "GREEN": 10,
+        "BLACK": 3
+      },
+      "transported": 21,
+      "awaiting_dispatch": 11,
+      "mean_dispatch_latency_sec": 0.0,
+      "hospital_load_gini": 0.325,
+      "triage_accuracy": 1.0,
+      "transport_match_score": 0.929,
+      "survival_proxy_score": 0.913
+    },
+    "baseline_metrics": {
+      "total_patients": 45,
+      "by_category": {
+        "RED": 18,
+        "YELLOW": 14,
+        "GREEN": 10,
+        "BLACK": 3
+      },
+      "transported": 18,
+      "awaiting_dispatch": 12,
+      "mean_dispatch_latency_sec": 0.0,
+      "hospital_load_gini": 0.833,
+      "triage_accuracy": 1.0,
+      "transport_match_score": 0.667,
+      "survival_proxy_score": 0.733
+    }
+  }
+]

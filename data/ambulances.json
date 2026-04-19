@@ -1,0 +1,18 @@
+[
+  {"ambulance_id": "A-001", "type": "ALS", "position": {"lat": 40.4362, "lng": -79.9881}},
+  {"ambulance_id": "A-002", "type": "ALS", "position": {"lat": 40.4351, "lng": -79.9931}},
+  {"ambulance_id": "A-003", "type": "ALS", "position": {"lat": 40.4390, "lng": -79.9854}},
+  {"ambulance_id": "A-004", "type": "ALS", "position": {"lat": 40.4307, "lng": -79.9914}},
+  {"ambulance_id": "A-005", "type": "ALS", "position": {"lat": 40.4339, "lng": -79.9842}},
+  {"ambulance_id": "A-006", "type": "ALS", "position": {"lat": 40.4375, "lng": -79.9805}},
+  {"ambulance_id": "A-007", "type": "ALS", "position": {"lat": 40.4402, "lng": -79.9797}},
+  {"ambulance_id": "A-008", "type": "ALS", "position": {"lat": 40.4321, "lng": -79.9972}},
+  {"ambulance_id": "A-009", "type": "BLS", "position": {"lat": 40.4415, "lng": -79.9909}},
+  {"ambulance_id": "A-010", "type": "BLS", "position": {"lat": 40.4299, "lng": -79.9861}},
+  {"ambulance_id": "A-011", "type": "BLS", "position": {"lat": 40.4386, "lng": -79.9994}},
+  {"ambulance_id": "A-012", "type": "BLS", "position": {"lat": 40.4348, "lng": -79.9782}},
+  {"ambulance_id": "A-013", "type": "BLS", "position": {"lat": 40.4433, "lng": -79.9839}},
+  {"ambulance_id": "A-014", "type": "BLS", "position": {"lat": 40.4315, "lng": -79.9818}},
+  {"ambulance_id": "A-015", "type": "BLS", "position": {"lat": 40.4371, "lng": -79.9949}}
+]
+

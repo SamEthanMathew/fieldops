@@ -1,0 +1,140 @@
+[
+  {
+    "hospital_id": "H-001",
+    "name": "UPMC Presbyterian",
+    "location": {
+      "lat": 40.4443,
+      "lng": -79.9592
+    },
+    "trauma_level": 1,
+    "specialties": [
+      "trauma",
+      "burn_center",
+      "neurosurgery",
+      "orthopedic_surgery"
+    ],
+    "capacity": {
+      "total_beds": 40,
+      "available_beds": 14,
+      "icu_available": 4,
+      "or_available": 2
+    },
+    "status": "OPEN",
+    "divert_status": false,
+    "base_eta_minutes": 14
+  },
+  {
+    "hospital_id": "H-002",
+    "name": "Allegheny General Hospital",
+    "location": {
+      "lat": 40.4545,
+      "lng": -80.0024
+    },
+    "trauma_level": 1,
+    "specialties": [
+      "trauma",
+      "neurosurgery",
+      "cardiac"
+    ],
+    "capacity": {
+      "total_beds": 34,
+      "available_beds": 10,
+      "icu_available": 3,
+      "or_available": 1
+    },
+    "status": "OPEN",
+    "divert_status": false,
+    "base_eta_minutes": 11
+  },
+  {
+    "hospital_id": "H-003",
+    "name": "UPMC Mercy",
+    "location": {
+      "lat": 40.4367,
+      "lng": -79.9827
+    },
+    "trauma_level": 1,
+    "specialties": [
+      "trauma",
+      "orthopedic_surgery",
+      "rehab"
+    ],
+    "capacity": {
+      "total_beds": 28,
+      "available_beds": 11,
+      "icu_available": 2,
+      "or_available": 2
+    },
+    "status": "OPEN",
+    "divert_status": false,
+    "base_eta_minutes": 18
+  },
+  {
+    "hospital_id": "H-004",
+    "name": "UPMC Children's Hospital",
+    "location": {
+      "lat": 40.4668,
+      "lng": -79.9526
+    },
+    "trauma_level": 1,
+    "specialties": [
+      "pediatric_trauma",
+      "pediatric_surgery",
+      "trauma"
+    ],
+    "capacity": {
+      "total_beds": 24,
+      "available_beds": 9,
+      "icu_available": 2,
+      "or_available": 1
+    },
+    "status": "OPEN",
+    "divert_status": false,
+    "base_eta_minutes": 16
+  },
+  {
+    "hospital_id": "H-005",
+    "name": "Jefferson Hospital",
+    "location": {
+      "lat": 40.2916,
+      "lng": -79.9355
+    },
+    "trauma_level": 2,
+    "specialties": [
+      "trauma",
+      "general_surgery"
+    ],
+    "capacity": {
+      "total_beds": 18,
+      "available_beds": 7,
+      "icu_available": 1,
+      "or_available": 1
+    },
+    "status": "OPEN",
+    "divert_status": false,
+    "base_eta_minutes": 25
+  },
+  {
+    "hospital_id": "H-006",
+    "name": "St. Clair Hospital",
+    "location": {
+      "lat": 40.3726,
+      "lng": -80.0748
+    },
+    "trauma_level": 3,
+    "specialties": [
+      "general_emergency",
+      "orthopedic_surgery"
+    ],
+    "capacity": {
+      "total_beds": 16,
+      "available_beds": 8,
+      "icu_available": 1,
+      "or_available": 1
+    },
+    "status": "OPEN",
+    "divert_status": false,
+    "base_eta_minutes": 22
+  }
+]
+
