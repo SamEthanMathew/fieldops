@@ -19,6 +19,8 @@ class TriageMemoryStore:
         self._index = None
         self._retriever = None
         self.backend = "local_keyword"
+        self.total_queries: int = 0
+        self.llamaindex_hits: int = 0
         self._load_entries()
         self._try_build_index()
 
@@ -92,6 +94,7 @@ class TriageMemoryStore:
 
     def query_similar(self, report: str, special_notes: list[str] | None = None, k: int = 3) -> list[dict[str, Any]]:
         special_notes = special_notes or []
+        self.total_queries += 1
         if self._retriever is not None:
             try:
                 query = f"report: {report}\nnotes: {', '.join(special_notes)}"
@@ -106,9 +109,11 @@ class TriageMemoryStore:
                             "incident_id": metadata.get("incident_id"),
                             "triage_category": metadata.get("triage_category"),
                             "reasoning": text[:220],
+                            "_retriever": "llamaindex",
                         }
                     )
                 if hits:
+                    self.llamaindex_hits += 1
                     return hits
             except Exception as exc:
                 logger.warning("LlamaIndex memory query failed, falling back locally: %s", exc)

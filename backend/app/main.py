@@ -183,6 +183,51 @@ def get_incident_report(incident_id: str):
     return FileResponse(path, media_type="application/pdf", filename=path.name)
 
 
+_EVAL_THRESHOLDS = {
+    "triage_accuracy":       {"min": 0.95, "label": "Triage Accuracy"},
+    "accuracy_RED":          {"min": 0.95, "label": "RED Accuracy"},
+    "accuracy_YELLOW":       {"min": 0.90, "label": "YELLOW Accuracy"},
+    "accuracy_GREEN":        {"min": 0.85, "label": "GREEN Accuracy"},
+    "transport_match_score": {"min": 0.90, "label": "Transport Match"},
+    "hospital_load_gini":    {"max": 0.30, "label": "Hospital Load Gini"},
+    "survival_proxy_score":  {"min": 0.90, "label": "Survival Proxy"},
+}
+
+
+@app.get("/api/incidents/{incident_id}/eval")
+def get_incident_eval(incident_id: str):
+    try:
+        session = manager.get(incident_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    metrics = session.state.metrics.model_dump(mode="json")
+    rows = []
+    for key, spec in _EVAL_THRESHOLDS.items():
+        if key.startswith("accuracy_"):
+            cat = key.split("_", 1)[1]
+            value = metrics.get("accuracy_by_category", {}).get(cat, 0.0)
+        else:
+            value = metrics.get(key, 0.0)
+        if "min" in spec:
+            passed = value >= spec["min"]
+            threshold = spec["min"]
+            direction = "min"
+        else:
+            passed = value <= spec["max"]
+            threshold = spec["max"]
+            direction = "max"
+        rows.append({
+            "metric": key,
+            "label": spec["label"],
+            "direction": direction,
+            "threshold": threshold,
+            "value": round(value, 3),
+            "pass": passed,
+        })
+    overall = all(r["pass"] for r in rows)
+    return {"incident_id": incident_id, "overall_pass": overall, "thresholds": rows}
+
+
 @app.get("/api/incidents/{incident_id}/audit.json")
 def get_incident_audit_json(incident_id: str):
     try:

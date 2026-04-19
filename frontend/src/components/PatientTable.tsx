@@ -101,6 +101,28 @@ export function PatientTable({ patients, snapshot, selectedPatientId, onSelectPa
                         Needs: {p.needs.join(", ")}
                       </div>
                     )}
+                    {p.citation && (
+                      <div style={{ marginTop: 6, padding: "4px 7px", background: "rgba(56,189,248,0.07)", borderLeft: "2px solid #38bdf8", borderRadius: "0 3px 3px 0" }}>
+                        <div style={{ fontSize: "0.62rem", color: "#38bdf8", fontWeight: 700, fontFamily: "var(--font-mono)", marginBottom: 2 }}>
+                          PROTOCOL: {p.citation.source}
+                        </div>
+                        {p.citation.excerpt && (
+                          <div style={{ fontSize: "0.65rem", color: "var(--text-3)", lineHeight: 1.35, fontStyle: "italic" }}>
+                            "{p.citation.excerpt.slice(0, 120)}{p.citation.excerpt.length > 120 ? "…" : ""}"
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {p.memory_summary && (
+                      <div style={{ marginTop: 5, padding: "4px 7px", background: "rgba(139,92,246,0.07)", borderLeft: "2px solid #8b5cf6", borderRadius: "0 3px 3px 0" }}>
+                        <div style={{ fontSize: "0.62rem", color: "#8b5cf6", fontWeight: 700, fontFamily: "var(--font-mono)", marginBottom: 2 }}>
+                          SIMILAR CASES (LlamaIndex Memory)
+                        </div>
+                        <div style={{ fontSize: "0.65rem", color: "var(--text-3)", lineHeight: 1.35 }}>
+                          {p.memory_summary.slice(0, 160)}{p.memory_summary.length > 160 ? "…" : ""}
+                        </div>
+                      </div>
+                    )}
                     {p.data_quality_flags.length > 0 && (
                       <div style={{ marginTop: 3, fontSize: "0.65rem", color: "var(--warn)" }}>
                         Flags: {p.data_quality_flags.join(", ")}

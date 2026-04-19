@@ -47,6 +47,22 @@ def update_metrics(state: IncidentState) -> None:
         and patient.ground_truth_triage
         and getattr(patient.triage_category, "value", patient.triage_category) == patient.ground_truth_triage
     )
+
+    accuracy_by_category: dict[str, float] = {}
+    for cat in ("RED", "YELLOW", "GREEN", "BLACK"):
+        cat_patients = [
+            p for p in patients
+            if p.ground_truth_triage == cat and p.triage_category is not None
+        ]
+        if cat_patients:
+            correct = sum(
+                1 for p in cat_patients
+                if getattr(p.triage_category, "value", p.triage_category) == cat
+            )
+            accuracy_by_category[cat] = round(correct / len(cat_patients), 3)
+        else:
+            accuracy_by_category[cat] = 0.0
+
     transport_distribution = [
         sum(1 for patient in patients if patient.assigned_hospital == hospital_id)
         for hospital_id in state.hospitals.keys()
@@ -73,6 +89,7 @@ def update_metrics(state: IncidentState) -> None:
         mean_dispatch_latency_sec=round(mean_dispatch_latency, 1),
         hospital_load_gini=round(hospital_gini, 3),
         triage_accuracy=round(triage_accuracy, 3),
+        accuracy_by_category=accuracy_by_category,
         transport_match_score=round(transport_match, 3),
         survival_proxy_score=round(survival_proxy, 3),
     )

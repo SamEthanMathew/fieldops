@@ -132,6 +132,7 @@ class PatientRecord(FieldOpsModel):
     shadow_confidence: float | None = None
     shadow_reasoning: str | None = None
     memory_summary: str | None = None
+    citation: ProtocolCitation | None = None
     history: list[HistoryEntry] = Field(default_factory=list)
 
 
@@ -219,6 +220,7 @@ class MetricSnapshot(FieldOpsModel):
     mean_dispatch_latency_sec: float = 0.0
     hospital_load_gini: float = 0.0
     triage_accuracy: float = 0.0
+    accuracy_by_category: dict[str, float] = Field(default_factory=lambda: {"RED": 0.0, "YELLOW": 0.0, "GREEN": 0.0, "BLACK": 0.0})
     transport_match_score: float = 0.0
     survival_proxy_score: float = 0.0
 
@@ -284,6 +286,9 @@ class LiveMetrics(FieldOpsModel):
     circuit_breaker: CircuitBreakerStatus = Field(default_factory=CircuitBreakerStatus)
     emails_sent: int = 0
     emails_total: int = 0
+    rag_queries: int = 0
+    memory_retrievals: int = 0
+    memory_llamaindex_hits: int = 0
 
 
 class DecisionLogEntry(FieldOpsModel):

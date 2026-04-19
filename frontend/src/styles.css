@@ -242,6 +242,18 @@ input  { font-family: var(--font-sans); }
 }
 .error-strip button { background: none; border: none; color: #fca5a5; cursor: pointer; font-size: 1rem; padding: 0 4px; }
 .degraded-strip { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.3); color: var(--warn); }
+.guardrail-toast {
+  position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(13,26,46,0.97); border: 1px solid rgba(16,185,129,0.5);
+  color: #10b981; padding: 9px 16px; border-radius: 8px;
+  font-size: 0.76rem; font-weight: 600; box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+  animation: toast-in 0.2s ease;
+}
+.guardrail-toast-icon { font-size: 1rem; }
+@keyframes toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.rag-badge span { color: #a78bfa; }
+.stat-mini.rag-badge { color: #8b5cf6; }
 
 /* ── MAIN SURFACE (3-column) ────────────────────────────── */
 .app-body { display: flex; flex-direction: column; flex: 1; overflow: hidden; min-height: 0; }

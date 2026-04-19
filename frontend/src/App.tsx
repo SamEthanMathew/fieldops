@@ -209,6 +209,11 @@ function CommandBar({
           {snapshot && (
             <span className="stat-mini">$<span>{snapshot.live_metrics.cost_estimate.total_usd.toFixed(3)}</span></span>
           )}
+          {snapshot?.meta?.rag_backend && (
+            <span className="stat-mini rag-badge" title="LlamaIndex RAG backend">
+              RAG:<span>{String(snapshot.meta.rag_backend).replace("llamaindex_", "LI/")}</span>
+            </span>
+          )}
         </div>
       </div>
     </header>
@@ -484,6 +489,33 @@ function CommandColumn({ snapshot, compareBaseline, onToggleBaseline }: {
                 </div>
               );
             })}
+
+            {/* LlamaIndex integration card */}
+            <div className="info-card" style={{ borderColor: "rgba(139,92,246,0.35)" }}>
+              <div className="info-card-title" style={{ color: "#8b5cf6" }}>LlamaIndex Integration</div>
+              <div className="info-row">
+                <span>RAG Backend</span>
+                <strong style={{ color: "#a78bfa" }}>{String(snapshot.meta?.rag_backend ?? "local_keyword")}</strong>
+              </div>
+              <div className="info-row">
+                <span>Memory Backend</span>
+                <strong style={{ color: "#a78bfa" }}>{String(snapshot.meta?.memory_backend ?? "local_keyword")}</strong>
+              </div>
+              <div className="info-row">
+                <span>Memory Queries</span>
+                <strong>{live.memory_retrievals ?? 0}</strong>
+              </div>
+              <div className="info-row">
+                <span>LlamaIndex Hits</span>
+                <strong style={{ color: live.memory_llamaindex_hits > 0 ? "#10b981" : "var(--text-3)" }}>
+                  {live.memory_llamaindex_hits ?? 0} / {live.memory_retrievals ?? 0}
+                </strong>
+              </div>
+              <div className="info-row">
+                <span>RAG Queries (Triage)</span>
+                <strong>{live.rag_queries ?? 0}</strong>
+              </div>
+            </div>
           </>
         )}
 
@@ -506,18 +538,60 @@ function CommandColumn({ snapshot, compareBaseline, onToggleBaseline }: {
               </div>
             </div>
 
+            <div className="exports-section">
+              <div className="export-title">Evaluation</div>
+              <div className="export-btn-stack">
+                <a className="export-btn export-btn--accent" href={`${API_BASE}/api/incidents/${snapshot.incident_id}/eval`} target="_blank" rel="noreferrer">
+                  ↓ Threshold Report (JSON)
+                </a>
+              </div>
+              <div style={{ marginTop: 8 }}>
+                {(["RED", "YELLOW", "GREEN", "BLACK"] as const).map((cat) => {
+                  const acc = snapshot.metrics.accuracy_by_category?.[cat];
+                  const color = acc == null ? "#64748b" : acc >= 0.95 ? "#10b981" : acc >= 0.80 ? "#f59e0b" : "#ef4444";
+                  return acc != null ? (
+                    <div key={cat} className="info-row">
+                      <span>{cat} accuracy</span>
+                      <strong style={{ color }}>{Math.round(acc * 100)}%</strong>
+                    </div>
+                  ) : null;
+                })}
+              </div>
+            </div>
+
             {snapshot.guardrails?.length > 0 && (
               <div className="exports-section">
                 <div className="export-title">Guardrails</div>
-                {snapshot.guardrails.map((g) => (
-                  <div key={g.rule_id} className="guardrail-item">
-                    <div className="gr-dot" style={{ background: "#10b981" }} />
-                    <div>
-                      <div className="gr-title">{g.title}</div>
-                      <div className="gr-desc">{g.description}</div>
-                    </div>
-                  </div>
-                ))}
+                {(() => {
+                  const GUARDRAIL_EVENT_MAP: Record<string, string> = {
+                    "red-human-approval": "guardrail_red_approval",
+                    "black-no-dispatch": "guardrail_black_hold",
+                    "stale-hospital-intel": "guardrail_stale_hospital",
+                    "low-confidence-escalation": "guardrail_low_confidence",
+                  };
+                  const fireCounts: Record<string, number> = {};
+                  for (const entry of (snapshot.audit_log ?? [])) {
+                    if (entry.event_type.startsWith("guardrail_")) {
+                      fireCounts[entry.event_type] = (fireCounts[entry.event_type] ?? 0) + 1;
+                    }
+                  }
+                  return snapshot.guardrails.map((g) => {
+                    const evtKey = GUARDRAIL_EVENT_MAP[g.rule_id];
+                    const count = evtKey ? (fireCounts[evtKey] ?? 0) : 0;
+                    return (
+                      <div key={g.rule_id} className="guardrail-item">
+                        <div className="gr-dot" style={{ background: count > 0 ? "#10b981" : "#475569" }} />
+                        <div style={{ flex: 1 }}>
+                          <div className="gr-title" style={{ display: "flex", justifyContent: "space-between" }}>
+                            <span>{g.title}</span>
+                            {count > 0 && <span style={{ fontSize: "0.65rem", color: "#10b981", fontFamily: "var(--font-mono)", fontWeight: 700 }}>{count}×</span>}
+                          </div>
+                          <div className="gr-desc">{g.description}</div>
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
               </div>
             )}
           </>
@@ -534,6 +608,11 @@ function Splash({ scenarios, selectedScenario, onSelect, onLaunch }: {
   onSelect: (s: string) => void;
   onLaunch: () => void;
 }) {
+  const [backendOk, setBackendOk] = useState<boolean | null>(null);
+  useEffect(() => {
+    fetch(`${API_BASE}/health`).then((r) => setBackendOk(r.ok)).catch(() => setBackendOk(false));
+  }, []);
+
   const features = [
     { title: "Live Triage AI", desc: "Protocol-grounded patient classification with citation-backed confidence scores." },
     { title: "Ambulance Routing", desc: "Dynamic dispatch scoring with resource reservation and queued assignments." },
@@ -558,9 +637,15 @@ function Splash({ scenarios, selectedScenario, onSelect, onLaunch }: {
           <select className="splash-scenario-sel" value={selectedScenario} onChange={(e) => onSelect(e.target.value)}>
             {scenarios.map((s) => <option key={s.scenario_id} value={s.scenario_id}>{s.name}</option>)}
           </select>
-          <button className="splash-launch-btn" onClick={onLaunch} disabled={scenarios.length === 0}>
+          <button className="splash-launch-btn" onClick={onLaunch} disabled={scenarios.length === 0 || backendOk === false}>
             Launch Demo
           </button>
+        </div>
+        <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 8, justifyContent: "center" }}>
+          <div style={{ width: 8, height: 8, borderRadius: "50%", background: backendOk === null ? "#f59e0b" : backendOk ? "#10b981" : "#ef4444", boxShadow: backendOk ? "0 0 6px #10b981" : undefined }} />
+          <span style={{ fontSize: "0.72rem", color: "var(--text-3)", fontFamily: "var(--font-mono)" }}>
+            {backendOk === null ? "Checking backend…" : backendOk ? "Backend connected" : "Backend offline — start server first"}
+          </span>
         </div>
       </div>
     </div>
@@ -582,11 +667,28 @@ export default function App() {
   const [modeUpdating, setModeUpdating] = useState(false);
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [cmdTab, setCmdTab] = useState<"sitrep" | "metrics" | "agents" | "exports">("sitrep");
+  const [guardrailToast, setGuardrailToast] = useState<string | null>(null);
+  const lastAuditCountRef = useRef(0);
 
   const wsRef = useRef<WebSocket | null>(null);
   const snapshotRef = useRef<IncidentSnapshot | null>(null);
 
   useEffect(() => { snapshotRef.current = snapshot; }, [snapshot]);
+
+  useEffect(() => {
+    if (!snapshot) return;
+    const auditLog = snapshot.audit_log ?? [];
+    if (auditLog.length > lastAuditCountRef.current) {
+      const newEntries = auditLog.slice(lastAuditCountRef.current);
+      const guardrailEntry = [...newEntries].reverse().find((e: { event_type: string }) => e.event_type.startsWith("guardrail_"));
+      if (guardrailEntry) {
+        setGuardrailToast(guardrailEntry.message);
+        const id = window.setTimeout(() => setGuardrailToast(null), 3500);
+        return () => window.clearTimeout(id);
+      }
+    }
+    lastAuditCountRef.current = auditLog.length;
+  }, [snapshot?.audit_log?.length]);
 
   useEffect(() => {
     getScenarios().then(setScenarios).catch(() => setError("Could not load scenarios."));
@@ -723,6 +825,12 @@ export default function App() {
       {snapshot?.degraded_mode && (
         <div className="error-strip degraded-strip">
           <span>{snapshot.degraded_reason}</span>
+        </div>
+      )}
+      {guardrailToast && (
+        <div className="guardrail-toast">
+          <span className="guardrail-toast-icon">🛡</span>
+          <span>GUARDRAIL: {guardrailToast}</span>
         </div>
       )}
 

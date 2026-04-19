@@ -23,6 +23,11 @@ export type HistoryEntry = {
   detail: string;
 };
 
+export type ProtocolCitation = {
+  source: string;
+  excerpt: string;
+};
+
 export type PatientRecord = {
   patient_id: string;
   raw_report: string;
@@ -46,6 +51,7 @@ export type PatientRecord = {
   shadow_confidence?: number | null;
   shadow_reasoning?: string | null;
   memory_summary?: string | null;
+  citation?: ProtocolCitation | null;
   history: HistoryEntry[];
 };
 
@@ -131,6 +137,7 @@ export type MetricSnapshot = {
   mean_dispatch_latency_sec: number;
   hospital_load_gini: number;
   triage_accuracy: number;
+  accuracy_by_category: Record<string, number>;
   transport_match_score: number;
   survival_proxy_score: number;
 };
@@ -196,6 +203,9 @@ export type LiveMetrics = {
   circuit_breaker: CircuitBreakerStatus;
   emails_sent: number;
   emails_total: number;
+  rag_queries: number;
+  memory_retrievals: number;
+  memory_llamaindex_hits: number;
 };
 
 export type AuditLogEntry = {

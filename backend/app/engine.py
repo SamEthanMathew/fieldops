@@ -507,6 +507,7 @@ class SimulationSession:
         patient.review_required = assessment.review_required
         patient.data_quality_flags = assessment.data_quality_flags
         patient.memory_summary = memory_summary
+        patient.citation = assessment.citation
         if patient.status not in {PatientStatus.DISPATCHED, PatientStatus.TRANSPORTED, PatientStatus.CLOSED}:
             patient.status = PatientStatus.TRIAGED
         patient.history.append(
@@ -536,6 +537,8 @@ class SimulationSession:
                 "mode": _enum_value(self.state.mode),
                 "shadow_triage_category": _enum_value(patient.shadow_triage_category),
                 "memory_summary": memory_summary,
+                "citation_source": assessment.citation.source,
+                "citation_excerpt": assessment.citation.excerpt[:120],
             },
         )
         if patient.review_required:
@@ -960,6 +963,9 @@ class SimulationSession:
             )
         accuracy_delta = active_accuracy - shadow_accuracy
         circuit_status = get_circuit_breaker_status()
+        rag_queries = self.memory_store.total_queries
+        memory_retrievals = self.memory_store.total_queries
+        memory_llamaindex_hits = self.memory_store.llamaindex_hits
         return LiveMetrics(
             current_mode=self.state.mode,
             active_accuracy=round(active_accuracy, 3),
@@ -993,6 +999,9 @@ class SimulationSession:
             circuit_breaker=circuit_status,
             emails_sent=sum(1 for email in self.state.email_log if email.status == "sent"),
             emails_total=len(self.state.email_log),
+            rag_queries=rag_queries,
+            memory_retrievals=memory_retrievals,
+            memory_llamaindex_hits=memory_llamaindex_hits,
         )
 
     def _refresh_runtime_state(self) -> None:
