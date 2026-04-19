@@ -235,6 +235,10 @@ async def incident_updates(websocket: WebSocket, incident_id: str):
             payload = await queue.get()
             await websocket.send_json(payload)
     except (WebSocketDisconnect, asyncio.CancelledError):
+        pass
+    except Exception:
+        pass
+    finally:
         session.unsubscribe(queue)
 
 

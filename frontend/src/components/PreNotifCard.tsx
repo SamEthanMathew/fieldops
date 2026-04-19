@@ -14,7 +14,8 @@ export function PreNotifCard({ notif, patient: _patient }: PreNotifCardProps) {
     "#10b981";
 
   const isSent = notif.email_status === "sent";
-  const isPending = notif.email_status === "pending" || notif.email_status === "draft";
+  const isFailed = notif.email_status === "failed";
+  const isPending = !isSent && !isFailed;
 
   return (
     <div className="prenotif-card">
@@ -27,8 +28,8 @@ export function PreNotifCard({ notif, patient: _patient }: PreNotifCardProps) {
         </span>
         <span className="prenotif-hosp">{notif.hospital_name}</span>
         <span className="prenotif-eta">ETA {notif.eta_minutes}m</span>
-        <span className={`sent-badge ${isSent ? "sent-badge--ok" : isPending ? "sent-badge--pend" : "sent-badge--pend"}`}>
-          {isSent ? "SENT ✓" : "PENDING"}
+        <span className={`sent-badge ${isSent ? "sent-badge--ok" : isFailed ? "sent-badge--fail" : "sent-badge--pend"}`}>
+          {isSent ? "SENT ✓" : isFailed ? "FAILED" : "PENDING"}
         </span>
       </div>
       <p className="prenotif-msg">

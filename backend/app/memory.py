@@ -77,12 +77,18 @@ class TriageMemoryStore:
             f"Reasoning: {entry.get('reasoning', '')}"
         )
 
+    _MAX_ENTRIES = 500
+
     def record_decision(self, payload: dict[str, Any]) -> None:
         self.entries.append(payload)
         with self.path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(payload, ensure_ascii=True) + "\n")
-        if self.backend == "llamaindex_memory":
-            self._try_build_index()
+        if len(self.entries) > self._MAX_ENTRIES:
+            self.entries = self.entries[-self._MAX_ENTRIES :]
+            self.path.write_text(
+                "\n".join(json.dumps(e, ensure_ascii=True) for e in self.entries) + "\n",
+                encoding="utf-8",
+            )
 
     def query_similar(self, report: str, special_notes: list[str] | None = None, k: int = 3) -> list[dict[str, Any]]:
         special_notes = special_notes or []
