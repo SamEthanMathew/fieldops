@@ -1,14 +1,62 @@
 # FieldOps
 
-FieldOps is a demo-first multi-agent mass casualty incident command system built for hackathon delivery. It simulates a Pittsburgh bridge collapse, classifies incoming patients, recommends hospital routing, monitors hospital capacity, and streams the full incident picture to a live operator dashboard.
+> Multi-agent AI co-pilot for mass casualty incident command.
 
-## Repo layout
+**Most Ambitious — CMU AI Agents Weekend 2026**
 
-- `backend/` FastAPI API, orchestration engine, agents, tests
-- `frontend/` React + Vite operator dashboard
-- `shared/` JSON schema and shared contracts
-- `data/` seeded hospitals, ambulances, scenarios, and protocol docs
-- `docs/` architecture notes and generated evaluation output
+---
+
+## What it is
+
+In a mass casualty incident, the bottleneck is not medical skill — it is information coordination under extreme time pressure. Only 56% of critically injured patients in studied cohorts are transported directly to trauma centers (JACS 2022). FieldOps puts a multi-agent AI system in the hands of the Incident Commander to fix that.
+
+It simulates a Pittsburgh bridge collapse, continuously classifies incoming patients using START/JumpStart triage protocols, recommends optimal ambulance-to-hospital routing, monitors hospital capacity in real time, and streams the full incident picture to a live operator dashboard. Agents coordinate through a shared incident state — never calling each other directly — which gives the system traceability, replayability, and graceful degradation when components fail.
+
+---
+
+## Agents
+
+Six agents run concurrently on a blackboard architecture:
+
+| Agent | Role |
+|---|---|
+| **Triage** | Classifies patients (RED / YELLOW / GREEN / BLACK) using rule-based vitals extraction and Gemini-2.5-flash with RAG-augmented protocol context |
+| **Hospital Intel** | Tracks bed availability, ICU/OR capacity, ETA from scene, and diversion status across the hospital network |
+| **Logistics** | Scores and recommends patient-to-ambulance-to-hospital assignments; queues future ambulances before they return |
+| **Overwatch** | Monitors global incident state, raises alerts, and generates situation reports (SITREPs) every five minutes |
+| **Orchestrator** | Detects inter-agent conflicts and issues strategic directives to rebalance the system |
+| **Pre-Notification** | Crafts clinical pre-alerts and PDFs when an ambulance is dispatched; attempts SMTP delivery to receiving hospitals |
+
+RED dispatches require explicit Incident Commander approval before execution. If Gemini is unavailable, all agents fall back to deterministic rule-based logic.
+
+---
+
+## Metrics
+
+Standard scenario (Pittsburgh bridge collapse, 25 patients, 45 minutes):
+
+| Metric | FieldOps | Naive baseline |
+|---|---|---|
+| Triage accuracy | **1.00** | — |
+| Transport match score | **0.964** | 0.679 |
+| Hospital load Gini | **0.179** | 0.833 |
+| Survival proxy score | **0.954** | 0.687 |
+| Mean dispatch latency | **0.0 s** | — |
+
+FieldOps improves destination matching by ~42% and reduces hospital load imbalance by ~78% compared to the naive dispatcher on the same scenario.
+
+---
+
+## Tech stack
+
+- **Backend:** Python 3.11, FastAPI, Pydantic, Uvicorn
+- **Frontend:** React 18, TypeScript, Vite, Leaflet
+- **LLM:** Google Gemini 2.5-flash via `google-genai`
+- **RAG:** LlamaIndex with Gemini embeddings over START/JumpStart/ICS-MCI protocol documents
+- **PDF generation:** ReportLab
+- **Infrastructure:** Docker + Compose
+
+---
 
 ## Quick start
 
@@ -17,9 +65,10 @@ FieldOps is a demo-first multi-agent mass casualty incident command system built
 ```bash
 cd backend
 python -m venv .venv
-.venv\Scripts\activate
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -e .[dev]
-uvicorn app.main:app --reload
+cp .env.example .env        # add your GEMINI_API_KEY
+uvicorn app.main:app --reload --port 8001
 ```
 
 ### Frontend
@@ -30,7 +79,7 @@ npm install
 npm run dev
 ```
 
-The frontend expects the backend on `http://localhost:8000`.
+The frontend expects the backend at `http://localhost:8001`. Open `http://localhost:5173`.
 
 ### Single-container run
 
@@ -40,24 +89,40 @@ docker compose up --build
 
 Then open `http://localhost:8000`.
 
+---
+
 ## Demo flow
 
-1. Start the backend and frontend.
-2. Click `Start Standard Scenario`.
-3. Use play, pause, step, and speed controls to drive the simulation.
-4. Review pending RED dispatches and approve them from the dashboard.
-5. Toggle baseline comparison and inject failures or diversions during the run.
+1. Select a scenario (light / standard / heavy) and click **Start**.
+2. Watch patients arrive, get triaged, and receive dispatch recommendations on the map.
+3. Approve pending RED dispatches from the IC Approvals panel.
+4. Inject failures mid-run — hospital diversions, ambulance outages, stale intel, agent timeouts.
+5. Toggle baseline comparison to see FieldOps vs. the naive dispatcher side-by-side.
+6. Export the incident report as a PDF from the Exports tab.
 
-## Current standard-scenario metrics
+---
 
-- `Triage Accuracy`: `1.00`
-- `Transport Match Score`: `0.964`
-- `Mean Dispatch Latency`: `0.0s` for assignment recommendations
-- `Hospital Load Gini`: `0.179`
-- `Survival Proxy Score`: `0.954`
+## Project layout
 
-## Notes
+```
+backend/          FastAPI app, simulation engine, agents, evaluation, tests
+frontend/         React operator dashboard
+shared/           JSON schema and TypeScript/Python shared contracts
+data/
+  ambulances.json   Pittsburgh ambulance fleet
+  hospitals.json    Regional hospital network with specialties
+  scenarios/        light / standard / heavy bridge-collapse scenarios
+  rag/              Medical protocol documents (START, JumpStart, ICS-MCI, SALT)
+docs/
+  architecture.md       Blackboard architecture overview
+  results/              Saved evaluation results
+scripts/          Utility scripts
+Dockerfile        Multi-stage build (frontend → Python runtime)
+docker-compose.yml
+```
 
-- The RAG layer defaults to local keyword retrieval over the protocol documents in `data/rag/`.
-- Claude, Tavily, and LlamaIndex are represented behind clean service interfaces so the demo runs without external credentials.
-- Evaluation artifacts can be generated with `python -m app.scripts.run_evaluations`.
+---
+
+## Team
+
+[Sam Mathew](https://github.com/SamEthanMathew) and Darren Pinto

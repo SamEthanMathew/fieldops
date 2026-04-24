@@ -17,3 +17,15 @@ backend/output/
 
 # Python packaging artifacts
 backend/fieldops_backend.egg-info/
+
+# Claude Code internal files
+.claude/
+
+# Internal dev scripts
+scripts/run-improvement-loop.ps1
+
+# Internal hackathon prep docs
+docs/autonomous_improvement_prompt.md
+docs/autonomous_improvement_workflow.md
+docs/judging_brief.md
+docs/presentation_script.md
