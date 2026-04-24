@@ -2,7 +2,7 @@
 
 > Multi-agent AI co-pilot for mass casualty incident command.
 
-**Most Ambitious — CMU AI Agents Weekend 2026**
+**Awarded the Most Ambitious Award — CMU AI Agents Hackathon 2026**
 
 ---
 
